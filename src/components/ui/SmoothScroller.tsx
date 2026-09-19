@@ -8,46 +8,41 @@ interface SmoothScrollerProps {
 }
 
 export function SmoothScroller({ children, onScrollProgress }: SmoothScrollerProps) {
-  const lenisRef = useRef<any>(null);
-
   useEffect(() => {
-    let active = true;
+    let lenisInstance: any = null;
     let rafId: number;
 
-    // Dynamically import Lenis on client side only
-    import('lenis').then(({ default: Lenis }) => {
-      if (!active) return;
+    // Use dynamic import to prevent any SSR access to window/document
+    if (typeof window !== 'undefined') {
+      import('lenis').then((module) => {
+        const Lenis = module.default;
+        lenisInstance = new Lenis({
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          orientation: 'vertical',
+          gestureOrientation: 'vertical',
+          smoothWheel: true,
+          touchMultiplier: 1.5,
+          infinite: false,
+        });
 
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        orientation: 'vertical',
-        gestureOrientation: 'vertical',
-        smoothWheel: true,
-        touchMultiplier: 1.5,
-        infinite: false,
-      });
-      lenisRef.current = lenis;
+        lenisInstance.on('scroll', (e: any) => {
+          if (onScrollProgress && e.progress !== undefined) {
+            onScrollProgress(e.progress);
+          }
+        });
 
-      const handleScroll = (e: any) => {
-        if (onScrollProgress && e.progress !== undefined) {
-          onScrollProgress(e.progress);
+        function raf(time: number) {
+          lenisInstance?.raf(time);
+          rafId = requestAnimationFrame(raf);
         }
-      };
-
-      lenis.on('scroll', handleScroll);
-
-      function raf(time: number) {
-        lenis.raf(time);
         rafId = requestAnimationFrame(raf);
-      }
-      rafId = requestAnimationFrame(raf);
-    });
+      });
+    }
 
     return () => {
-      active = false;
       if (rafId) cancelAnimationFrame(rafId);
-      if (lenisRef.current) lenisRef.current.destroy();
+      if (lenisInstance) lenisInstance.destroy();
     };
   }, [onScrollProgress]);
 

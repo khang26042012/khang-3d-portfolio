@@ -1,15 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: [
-    'three',
-    '@react-three/fiber',
-    '@react-three/drei',
-    '@react-three/postprocessing',
-    'postprocessing',
-    'lenis',
-    'gsap'
-  ],
+  transpilePackages: ['three', '@react-three/fiber', '@react-three/drei'],
   typescript: {
     ignoreBuildErrors: true,
   },
