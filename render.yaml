@@ -5,7 +5,7 @@ services:
     plan: free
     region: singapore
     buildCommand: ./build.sh
-    startCommand: npm start
+    startCommand: ./start.sh
     envVars:
       - key: NODE_VERSION
         value: 20.18.0
