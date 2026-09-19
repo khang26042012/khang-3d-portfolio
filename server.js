@@ -8,16 +8,31 @@ console.log(`[SERVER] Booting server on ${hostname}:${port}...`);
 
 let nextHandler = null;
 let isReady = false;
+let initError = null;
 
-// Create HTTP server listening immediately to satisfy Render's health check
+const app = next({ dev: false, hostname, port, dir: __dirname });
+app.prepare()
+  .then(() => {
+    nextHandler = app.getRequestHandler();
+    isReady = true;
+    console.log('[NEXT.JS ENGINE READY] Handling all portfolio traffic.');
+  })
+  .catch((err) => {
+    initError = (err && err.stack) || String(err);
+    console.error('[NEXT.JS PREPARE FAILED]', initError);
+  });
+
 const server = createServer(async (req, res) => {
-  // Render health check probe
   if (req.url === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     return res.end('OK');
   }
 
-  // If Next.js is ready, let Next.js handle the request
+  if (req.url === '/__debug') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    return res.end('isReady: ' + isReady + '\n\ninitError: ' + initError);
+  }
+
   if (isReady && nextHandler) {
     try {
       await nextHandler(req, res);
@@ -29,7 +44,11 @@ const server = createServer(async (req, res) => {
     }
   }
 
-  // Warmup state
+  if (initError) {
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    return res.end('Next.js Prepare Failed:\n\n' + initError);
+  }
+
   res.writeHead(200, { 'Content-Type': 'text/html' });
   res.end(`
     <!DOCTYPE html>
@@ -50,16 +69,4 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, hostname, () => {
   console.log(`[HTTP SERVER LIVE] http://${hostname}:${port}`);
-
-  // Initialize Next.js in parallel
-  const app = next({ dev: false, hostname, port, dir: __dirname });
-  app.prepare()
-    .then(() => {
-      nextHandler = app.getRequestHandler();
-      isReady = true;
-      console.log('[NEXT.JS ENGINE READY] Handling all portfolio traffic.');
-    })
-    .catch((err) => {
-      console.error('[NEXT.JS PREPARE FAILED]', err);
-    });
 });
