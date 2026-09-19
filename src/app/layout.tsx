@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,7 +6,12 @@ export const metadata: Metadata = {
   description: "Next.js 15 & Three.js 3D Scrollytelling Portfolio. High-performance, 60FPS mobile optimized.",
   keywords: ["Three.js", "React Three Fiber", "Next.js 15", "Portfolio", "WebGL", "Creative Developer"],
   authors: [{ name: "Phan Trọng Khang" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function RootLayout({
