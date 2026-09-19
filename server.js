@@ -1,4 +1,5 @@
 const { createServer } = require('http');
+const fs = require('fs');
 const next = require('next');
 
 const port = parseInt(process.env.PORT || '10000', 10);
@@ -26,6 +27,19 @@ const server = createServer(async (req, res) => {
   if (req.url === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     return res.end('OK');
+  }
+
+  // Allow inspecting the build log directly
+  if (req.url === '/build-log.txt') {
+    try {
+      if (fs.existsSync('public/build-log.txt')) {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        return res.end(fs.readFileSync('public/build-log.txt'));
+      }
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      return res.end('Error reading build-log.txt: ' + e.message);
+    }
   }
 
   if (req.url === '/__debug') {
